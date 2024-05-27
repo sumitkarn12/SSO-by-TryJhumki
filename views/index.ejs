@@ -1,0 +1,129 @@
+<%- include("header") %>
+
+    <div class="max-width w3-container w3-padding-16">
+        <div class="w3-center">
+            <img src="<%= app_logo %>" class="w3-padding-16 w3-margin-top w3-container w3-circle w3-border app-logo" />
+            <h3><%= app_name %></h3>
+        </div>
+        <div class="w3-border w3-round-large box login-box overflow-hidden">
+            <form method="POST" action="/auth/v1/<%=id%>/login" class="w3-container w3-padding-16">
+                <input type="hidden" name="app_id" value="<%=id%>" required>
+                <label for="email">Email</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="email" name="email" required>
+                <label for="password">Password</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="password" name="password" required>
+                <div class="w3-theme w3-round-xxlarge w3-margin-bottom progress-bar"></div>
+                <button class="w3-button w3-round-large w3-theme w3-block">Login</button>
+            </form>
+            <div class="w3-bar w3-border-top w3-tiny w3-container w3-padding-16">
+                <button class="w3-button w3-round-large w3-bar-item open-register-btn">Register</button>
+                <button class="w3-button w3-round-large w3-right w3-bar-item open-forgot-password-btn">Forgot Password?</button>
+            </div>
+        </div>
+        <div class="w3-border w3-round-large box register-box overflow-hidden">
+            <form method="POST" action="/auth/v1/<%= id %>/register" class="w3-container w3-padding-16">
+                <input type="hidden" value="<%=id%>" name="app_id" required>
+                <label for="name">Name</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="text" name="name" required>
+                <label for="email">Email</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="email" name="email" required>
+                <label for="password">Password</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="password" name="password" required>
+                <div class="w3-theme w3-round-xxlarge w3-margin-bottom progress-bar"></div>
+                <button class="w3-button w3-round-large w3-theme w3-block">Register</button>
+            </form>
+            <div class="w3-bar w3-tiny w3-border-top w3-container w3-padding-16">
+                <button class="w3-button w3-round-large w3-bar-item open-login-btn">Login</button>
+                <button class="w3-button w3-round-large w3-right w3-bar-item open-forgot-password-btn">Forgot
+                    Password?</button>
+            </div>
+        </div>
+        <div class="w3-border w3-round-large box forgot-password-box overflow-hidden">
+            <form method="POST" action="/auth/v1/<%=id%>/password/forgot" class="w3-container w3-padding-16">
+                <input type="hidden" name="app_id" value="<%=id%>" required>
+                <label for="email">Email</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="email" name="email" required>
+                <label for="password1">New Password</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="password" name="password1" autocomplete="new-password" required>
+                <div class="w3-theme w3-round-xxlarge w3-margin-bottom progress-bar"></div>
+                <label for="password2">Confirm Password</label>
+                <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="password" name="password2" autocomplete="new-password" required>
+                <div class="w3-theme w3-round-xxlarge w3-margin-bottom progress-bar"></div>
+                <button class="w3-button w3-round-large w3-theme w3-block">Send password reset link</button>
+            </form>
+            <div class="w3-bar w3-tiny w3-container w3-padding-16 w3-border-top">
+                <button class="w3-button w3-round-large w3-bar-item open-login-btn">Login</button>
+                <button class="w3-button w3-round-large w3-right w3-bar-item open-register-btn">Register</button>
+            </div>
+        </div>
+        <% if ( err && err.length> 0 ) { %>
+            <ul class="w3-ul w3-theme-light w3-round-large w3-margin-top">
+                <% err.map( er=> { %>
+                    <li><%= er %></li>
+                <% }) %>
+            </ul>
+        <% } %>
+    </div>
+
+    <script>
+        const showBox = (elementClass) => {
+            document.querySelectorAll(".box").forEach(el => el.style.display = 'none');
+            document.querySelector(elementClass).style.display = 'block';
+        }
+        showBox(".login-box");
+
+        document.querySelectorAll('.open-login-btn').forEach(el => {
+            el.addEventListener("click", () => showBox(".login-box"));
+        });
+
+        document.querySelectorAll('.open-register-btn').forEach(el => {
+            el.addEventListener("click", () => showBox(".register-box"));
+        });
+
+        document.querySelectorAll('.open-forgot-password-btn').forEach(el => {
+            el.addEventListener("click", () => showBox(".forgot-password-box"));
+        });
+
+        function getPasswordStrength(password) {
+            let strength = 0;
+            if (password.match(/[a-z]+/)) strength++;
+            if (password.match(/[A-Z]+/)) strength++;
+            if (password.match(/[0-9]+/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]+/)) strength++;
+            return strength;
+        }
+
+        function debounce(func, timeout = 300) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
+        document.querySelectorAll("[type=password]").forEach(el => {
+            el.addEventListener("input", debounce((ev) => {
+                let passwordStrength = getPasswordStrength( ev.target.value.trim() );
+                ev.target.nextElementSibling.style.width = `${25*passwordStrength}%`;
+            }, 500));
+        });
+
+        document.querySelector(".forgot-password-box form").addEventListener("submit", ev => {
+            ev.preventDefault();
+            let password1 = document.querySelector("[name=password1]").value.trim();
+            let password2 = document.querySelector("[name=password2]").value.trim();
+            if ( password1 === password2 ) {
+                ev.target.submit();
+                return;
+            }
+            Toastify({
+                text: `New Password and confirm password does not match.`,
+                position: 'left',
+                gravity: 'top'
+            }).showToast();
+        });
+
+    </script>
+
+
+    <%- include("footer") %>

@@ -3,65 +3,8 @@ const auth = express.Router();
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 const db = require("./db")
-const {renderFile} = require("ejs")
-const { createTransport } = require('nodemailer');
 const { Worker } = require('worker_threads');
 
-const transport = createTransport({
-    host: process.env.MAIL_HOST,
-    port: process.env.MAIL_PORT,
-    auth: {
-        user: process.env.MAIL_USERNAME,
-        pass: process.env.MAIL_PASSWORD,
-    }
-});
-
-const email_template = function (obj) {
-    return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml">
-    <head>
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Reset account password</title>
-    </head>
-    <body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
-      <table role="presentation" style="width: 100%; border-collapse: collapse; border: 0px; border-spacing: 0px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(239, 239, 239);">
-        <tbody>
-          <tr>
-            <td align="center" style="padding: 1rem 2rem; vertical-align: top; width: 100%;">
-              <table role="presentation" style="max-width: 600px; border-collapse: collapse; border: 0px; border-spacing: 0px; text-align: left;">
-                <tbody>
-                  <tr>
-                    <td style="padding: 40px 0px 0px;">
-                      <div style="text-align: left;">
-                        <div style="padding-bottom: 20px;">
-                          <img src="${obj.app_logo}" alt="${obj.app_name} logo" style="width: 56px; border-radius: 50%; border: 1px solid gray; padding: 8px;" />
-                        </div>
-                      </div>
-                      <div style="padding: 20px; background-color: rgb(255, 255, 255); border-radius: 16px;">
-                        <div style="color: rgb(0, 0, 0); text-align: left;">
-                          <p>Click the below button to reset your account password.</p>
-                          <a href="${obj.url}" style="font-size: 16px; font-weight: bold; text-decoration:none; color:#000;">
-                            <p style="padding: 16px; background-color: rgb(239, 239, 239); text-align:center; border-radius: 12px;">Reset password</p>
-                          </a>
-                          <p style="padding-bottom: 16px">If you didn’t request this, you can ignore this email.</p>
-                          <p>Thanks,<br>The ${obj.app_name} Team</p>
-                        </div>
-                      </div>
-                      <div style="padding-top: 20px; color: rgb(153, 153, 153); text-align: center;">
-                        <p style="padding-bottom: 16px">Made with ♥ in India</p>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </body>
-    </html>`;
-}
 
 auth.use(["/:app_id", "/:app_id/*"], (req, res, next) => {
     req.params.app_id = +req.params.app_id;
@@ -206,8 +149,17 @@ auth.post("/:app_id/password/reset", function (req, res) {
         if (response.success) {
             try {
                 let verifiedToken = jwt.verify(req.app_detail.payload, response.user.password);
-                return db.setNewSaltedPassword({ id: decodedPayload.id, password: verifiedToken.password }, response => {
-                    req.err.push(response.message);
+                return db.setNewSaltedPassword({ id: decodedPayload.id, password: verifiedToken.password }, updatedResponse => {
+                    if ( updatedResponse.success ) {
+                        const worker = new Worker( './workers/send_password_updated_info.js', {
+                            workerData: {
+                                app_logo: req.app_detail.app_logo,
+                                app_name: req.app_detail.app_name,
+                                to: response.user.email
+                            }
+                        });
+                    }
+                    req.err.push(updatedResponse.message);
                     return res.render("index", getViewObject(req.app_detail, req.err));
                 });
             } catch (error) {

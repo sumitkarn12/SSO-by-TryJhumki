@@ -12,7 +12,9 @@ const transport = createTransport({
 });
 
 workerData.from = `${workerData.app_name} Team <accounts@sso.tryjhumki.com>`,
-workerData.subject = `${workerData.app_name}: Password reset request`
+workerData.subject = `${workerData.app_name}: Password updated`
+
+console.log( workerData );
 
 renderFile( './workers/template/password-updated.ejs', workerData, null, (err, string) => {
     console.log( "Error while rendering password updated email template", err );
@@ -20,4 +22,4 @@ renderFile( './workers/template/password-updated.ejs', workerData, null, (err, s
     transport.sendMail(workerData, console.log);
 });
 
-parentPort.postMessage( { fileName: workerData, status: 'Done' } ); 
+// parentPort.postMessage( { fileName: workerData, status: 'Done' } ); 

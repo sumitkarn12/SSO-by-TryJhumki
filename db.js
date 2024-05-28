@@ -112,7 +112,6 @@ exports.getNewSaltedPassword = function( user, callback ) {
         callback({ "success": true, "user": results });
     });
 }
-
 exports.setNewSaltedPassword = function( user, callback ) {
     connection.query(`UPDATE users set password = ? where id = ?`,[ user.password, user.id ], ( err, results ) => {
         if ( err ) return callback({ "success": false, "message": err.sqlMessage });

@@ -3,7 +3,9 @@ const auth = express.Router();
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 const db = require("./db")
+const {renderFile} = require("ejs")
 const { createTransport } = require('nodemailer');
+const { Worker } = require('worker_threads');
 
 const transport = createTransport({
     host: process.env.MAIL_HOST,
@@ -134,6 +136,7 @@ auth.post("/:app_id/login", function (req, res) {
             payload.id = response.user.id,
             payload.app_id = response.user.app_id
             let uri = req.app_detail.redirect_uri+"?token="+jwt.sign(payload, process.env.JWT_SECURITY_KEY); 
+        
             return res.redirect( uri );
         }
         res.render("index", getViewObject(req.app_detail, req.err));
@@ -174,39 +177,18 @@ auth.post("/:app_id/password/forgot", function (req, res) {
         req.err.push(`New Password and Confirm Password does not match.`);
         return res.render("index", getViewObject(req.app_detail, req.err));
     }
-    req.body.password = req.body.password1;
-    db.getNewSaltedPassword(req.body, response => {
-        if (!response.success) {
-            req.err.push(response.message);
-            return res.render("index", getViewObject(req.app_detail, req.err));
-        }
-        let payload = {
-            id: response.user.id,
-            password: response.user.salted_password,
-            iat: Math.floor(Date.now() / 1000),
-            nbf: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (15 * 60)
-        }
-        password_reset_url = `${password_reset_url}?payload=${jwt.sign(payload, response.user.password)}`;
-        const mailOptions = {
-            from: `${req.app_detail.app_name} Team <accounts@sso.tryjhumki.com>`,
+    const worker = new Worker( './workers/send_password_reset_info.js', {
+        workerData: {
+            app_logo: req.app_detail.app_logo,
+            app_name: req.app_detail.app_name,
+            url: password_reset_url,
             to: req.body.email,
-            subject: `${req.app_detail.app_name}: Password reset request`,
-            html: email_template({
-                app_logo: req.app_detail.app_logo,
-                app_name: req.app_detail.app_name,
-                url: password_reset_url
-            })
-        };
-        transport.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                req.err.push( error.message )
-            } else {
-                req.err.push( `Account password link has been sent to your given email address.` )
-            }
-            return res.render("index", getViewObject(req.app_detail, req.err));
-        });
+            password: req.body.password1,
+            password_reset_url: password_reset_url
+        }
     });
+    req.err.push( `You should receive an email to reset password of your account.` );
+    return res.render("index", getViewObject(req.app_detail, req.err));
 });
 auth.get("/:app_id/password/forgot", function (req, res) {
     req.app_detail.payload = req.query.payload;

@@ -5,11 +5,11 @@ require('dotenv').config();
 const db = require("./db")
 const { Worker } = require('worker_threads');
 
-
 auth.use(["/:app_id", "/:app_id/*"], (req, res, next) => {
     req.params.app_id = +req.params.app_id;
     req.body.app_id = +req.body?.app_id;
     db.getApp(req.params.app_id, response => {
+        console.log( response )
         req.err = [];
         req.app_detail = null;
         if (response.success) {
@@ -65,7 +65,9 @@ auth.get("/callback", (req, res) => {
 });
 
 auth.get("/:app_id", function (req, res) {
-    res.render("index", getViewObject(req.app_detail, req.err));
+    let obj = getViewObject(req.app_detail, req.err);
+    console.log( obj );
+    res.render( "index", obj );
 });
 auth.post("/:app_id/login", function (req, res) {
     db.validateUser(req.body, response => {

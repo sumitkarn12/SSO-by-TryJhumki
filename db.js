@@ -51,6 +51,7 @@ exports.getApps = function(owner, callback ) {
 }
 exports.getApp = function( id, callback ) {
     connection.query( "select * from apps where id = ?", [ id ], function (err, results) {
+        console.log( err );
         if ( err ) return callback({ success: false, message: err.sqlMessage });
         if ( !results[0] ) return callback({ success: false, message: `No app found with ${id}` });
         callback({ success: true, app_detail: results[0] });

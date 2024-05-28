@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 app.get("/", function (req, res) {
-    res.redirect( "/auth/v1/9" );
+    res.redirect( `/auth/v1/${process.env.SSO_APP_ID}` );
 });
 
 app.use("/app", auth_app );

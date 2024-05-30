@@ -32,7 +32,11 @@ getNewSaltedPassword({email: workerData.to, password: workerData.password}, resp
     renderFile( './workers/template/reset-password.ejs', workerData, null, (err, string) => {
         console.log( "Error while rendering password reset email template", err );
         workerData.html = string;
-        transport.sendMail(workerData, console.log);
+        transport.sendMail(workerData, ( err, info ) => {
+            console.error( err );
+            console.log( info );
+            transport.close();
+        });
     });
 });
 

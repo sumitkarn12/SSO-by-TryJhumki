@@ -9,7 +9,6 @@ auth.use(["/:app_id", "/:app_id/*"], (req, res, next) => {
     req.params.app_id = +req.params.app_id;
     req.body.app_id = +req.body?.app_id;
     db.getApp(req.params.app_id, response => {
-        console.log( response )
         req.err = [];
         req.app_detail = null;
         if (response.success) {
@@ -17,6 +16,7 @@ auth.use(["/:app_id", "/:app_id/*"], (req, res, next) => {
         } else {
             req.err.push(response.message);
         }
+        req.app_detail.test = req.query.test;
         next();
     });
 });
@@ -32,10 +32,10 @@ function getViewObject(app_detail, message_array = []) {
     });
 }
 
+// For admin page
 auth.get("/logout", (req, res) => {
     return res.clearCookie("access_token").status(200).redirect("/");
 })
-
 auth.get("/callback", (req, res) => {
     let token = req.query.token;
     let validatedPayload = null;
@@ -64,9 +64,9 @@ auth.get("/callback", (req, res) => {
     res.status(403).json({ success: false, message: req.err });
 });
 
+// For 3rd party SSO page
 auth.get("/:app_id", function (req, res) {
     let obj = getViewObject(req.app_detail, req.err);
-    console.log( obj );
     res.render( "index", obj );
 });
 auth.post("/:app_id/login", function (req, res) {
@@ -79,9 +79,10 @@ auth.post("/:app_id/login", function (req, res) {
                 exp: Math.floor(Date.now() / 1000) + (15 * 60)
             }
             payload.id = response.user.id,
-            payload.app_id = response.user.app_id
-            let uri = req.app_detail.redirect_uri+"?token="+jwt.sign(payload, process.env.JWT_SECURITY_KEY); 
-        
+            payload.app_id = response.user.app_id;
+            let redirect_uri = (!req.body.test)?req.app_detail.redirect_uri:req.app_detail.redirect_uri_test;
+            let uri = redirect_uri+"?token="+jwt.sign(payload, process.env.JWT_SECURITY_KEY); 
+
             return res.redirect( uri );
         }
         res.render("index", getViewObject(req.app_detail, req.err));
@@ -93,28 +94,8 @@ auth.post("/:app_id/register", function (req, res) {
         res.render("index", getViewObject(req.app_detail, req.err));
     });
 });
-auth.get("/:app_id/user", function (req, res) {
-    let token = req.query.token;
-    let validatedPayload = null;
-    res.type('json')
-    try {
-        validatedPayload = jwt.verify(token, process.env.JWT_SECURITY_KEY);
-        if (validatedPayload.app_id != req.params.app_id)
-            req.err.push(`Invalid payload.`);
-    } catch (error) { req.err.push(error.message); }
-
-    if (validatedPayload) {
-        return db.getUser(validatedPayload.id, response => {
-            if (!response.success) {
-                res.status(403);
-            }
-            res.json(response);
-        });
-    }
-    res.status(403).json({ success: false, message: req.err });
-});
 auth.post("/:app_id/password/forgot", function (req, res) {
-    let password_reset_url = `${req.protocol}://sso.tryjhumki.com/auth/v1/${req.params.app_id}/password/forgot`;
+    let password_reset_url = `${req.protocol}://sso.tryjhumki.com/auth/v1/${req.params.app_id}/password/reset`;
     if (req.hostname == 'localhost')
         password_reset_url = password_reset_url.replace('sso.tryjhumki.com', `localhost:${3000}`);
 
@@ -135,12 +116,8 @@ auth.post("/:app_id/password/forgot", function (req, res) {
     req.err.push( `You should receive an email to reset password of your account.` );
     return res.render("index", getViewObject(req.app_detail, req.err));
 });
-auth.get("/:app_id/password/forgot", function (req, res) {
+auth.get("/:app_id/password/reset", function (req, res) {
     req.app_detail.payload = req.query.payload;
-    return res.render("reset_password", getViewObject(req.app_detail, req.err));
-});
-auth.post("/:app_id/password/reset", function (req, res) {
-    req.app_detail.payload = req.body.payload;
     let decodedPayload = null;
     try { decodedPayload = jwt.decode(req.app_detail.payload); }
     catch (error) {
@@ -170,6 +147,26 @@ auth.post("/:app_id/password/reset", function (req, res) {
         }
         return res.render("reset_password", getViewObject(req.app_detail, req.err));
     })
+});
+auth.get("/:app_id/user", function (req, res) {
+    let token = req.query.token;
+    let validatedPayload = null;
+    res.type('json')
+    try {
+        validatedPayload = jwt.verify(token, process.env.JWT_SECURITY_KEY);
+        if (validatedPayload.app_id != req.params.app_id)
+            req.err.push(`Invalid payload.`);
+    } catch (error) { req.err.push(error.message); }
+
+    if (validatedPayload) {
+        return db.getUser(validatedPayload.id, response => {
+            if (!response.success) {
+                res.status(403);
+            }
+            res.json(response);
+        });
+    }
+    res.status(403).json({ success: false, message: req.err });
 });
 
 module.exports = auth;

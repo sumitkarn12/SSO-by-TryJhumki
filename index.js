@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const auth_app = require("./AuthApp")
+const admin = require("./Admin")
 const auth = require("./Auth")
 const cors = require("cors")
 const jwt = require("jsonwebtoken");
@@ -22,7 +22,7 @@ app.get("/", function (req, res) {
     res.redirect( `/auth/v1/${process.env.SSO_APP_ID}` );
 });
 
-app.use("/app", auth_app );
+app.use("/app", admin );
 app.use("/auth/v1", auth );
 
 app.listen( process.env.PORT || 3000, (req, res) => {

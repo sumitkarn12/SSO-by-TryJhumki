@@ -13,7 +13,8 @@ const connection = mysql.createConnection({
 
 exports.createApp = function( app_detail, callback ) {
     connection.query(
-        "INSERT into apps (app_name,app_logo, redirect_uri,owner) values(?,?, ?,?)", [ app_detail.app_name, app_detail.app_logo, app_detail.redirect_uri, app_detail.owner ],
+        "INSERT into apps (app_name,app_logo, redirect_uri, redirect_uri_test,owner) values(?,?,?,?,?)",
+        [ app_detail.app_name, app_detail.app_logo, app_detail.redirect_uri, app_detail.redirect_uri_test, app_detail.owner ],
         function (err, results) {
             if ( err )
                 throw err
@@ -23,8 +24,8 @@ exports.createApp = function( app_detail, callback ) {
 }
 exports.updateApp = function( app_detail, callback ) {
     connection.query(
-        "UPDATE apps set app_name = ?, app_logo = ?, redirect_uri = ? where id =? and owner = ?",
-        [ app_detail.app_name, app_detail.app_logo, app_detail.redirect_uri, app_detail.id, app_detail.owner ],
+        "UPDATE apps set app_name = ?, app_logo = ?, redirect_uri = ?, redirect_uri_test = ? where id =? and owner = ?",
+        [ app_detail.app_name, app_detail.app_logo, app_detail.redirect_uri, app_detail.redirect_uri_test, app_detail.id, app_detail.owner ],
         function (err, results) {
             if ( err )
                 throw err

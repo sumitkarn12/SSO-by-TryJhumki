@@ -1,51 +1,53 @@
 <%- include("header") %>
 
-<div class="w3-container w3-padding-16 max-width">
-    <h3>Create an App</h3>
-    <div class="w3-border w3-round-large">
-        <form id="create-or-update" method="post" action="/app" class="w3-container w3-padding-16 w3-tiny">
-            <div class="w3-row">
-                <div class="w3-col s3">
-                    <label for="id">App ID</label>
-                    <input class="w3-input w3-border w3-round w3-margin-bottom" type="text" name="id" disabled />
-                </div>
-                <div class="w3-col s9" style="padding-left: 8px;">
-                    <label for="app_name">App Name</label>
-                    <input class="w3-input w3-border w3-round w3-margin-bottom" type="text" name="app_name" required>
-                </div>
+<div class="w3-row-padding max-width">
+    <div class="w3-col s12 m6">
+        <div class="w3-large w3-margin-top w3-margin-bottom">Create an App</div>
+        <div class="w3-border w3-round-large">
+            <form id="create-or-update" method="post" action="/app" class="w3-container w3-padding-16 w3-tiny">
+                <input class="w3-input w3-border w3-round w3-margin-bottom" type="hidden" name="id" disabled />
+                <label for="app_name">App Name</label>
+                <input class="w3-input w3-border w3-round w3-margin-bottom" type="text" name="app_name" required>
+                <label for="app_logo">App Logo</label>
+                <input class="w3-input w3-border w3-round w3-margin-bottom" type="url" name="app_logo" required>
+                <label for="redirect_uri">Redirect URI</label>
+                <input class="w3-input w3-border w3-round w3-margin-bottom" type="url" name="redirect_uri" required>
+                <label for="redirect_uri_test">Redirect URI for testing</label>
+                <input class="w3-input w3-border w3-round w3-margin-bottom" type="url" name="redirect_uri_test" required>
+                <button class="w3-button w3-round w3-theme w3-block submit">Create</button>
+            </form>
+            <hr/>
+            <div class="w3-center w3-margin-bottom">
+                <button class="w3-button w3-theme w3-round new-btn">New App</button>
             </div>
-            <label for="app_logo">App Logo</label>
-            <input class="w3-input w3-border w3-round w3-margin-bottom" type="text" name="app_logo" required>
-            <label for="redirect_uri">Redirect URI</label>
-            <input class="w3-input w3-border w3-round  w3-margin-bottom" type="text" name="redirect_uri" required>
-            <button class="w3-button w3-round w3-theme w3-block submit">Create</button>
-        </form>
+        </div>
     </div>
-    <div class="w3-row w3-margin-bottom" style="margin-top: 32px;">
-        <div class="w3-col s8 w3-large">App List</div>
-        <div class="w3-col s4"><button class="w3-tiny w3-button w3-theme w3-round w3-block new-btn">New App</button></div>
+    <div class="w3-col s12 m6">
+        <div class="w3-large w3-margin-top w3-margin-bottom">App List</div>
+        
+        <ul class="w3-ul w3-border w3-round-large app-list">
+            <% apps.map( a => { %>
+                <li class="app_<%= a.id %>" data-id="<%= a.id %>">
+                    <img src="<%= a.app_logo %>" class="w3-circle app-logo w3-border" alt="" />
+                    <div class="w3-block">
+                        <div class="w3-text-theme">#<%= a.id %> <span class="app_name"><%= a.app_name %></span></div>
+                        <div class="redirect_uri w3-tiny"><%= a.redirect_uri %></div>
+                        <div class="redirect_uri_test w3-tiny"><%= a.redirect_uri_test %></div>
+                        <div class="w3-section"></div>
+                        <button class="w3-button w3-theme w3-tiny w3-round edit" data-id="<%= a.id %>">Edit</button>
+                        <form action="/app/delete" method="post" class="w3-right">
+                            <input type="hidden" name="id" value="<%= a.id %>">
+                            <button class="w3-button w3-round w3-tiny delete" data-id="<%= a.id %>">Delete</button>
+                        </form>
+                    </div>
+                </li>
+            <% }) %>
+        </ul>
     </div>
-    
-    <ul class="w3-ul w3-border w3-round-large app-list">
-        <% apps.map( a => { %>
-            <li class="app_<%= a.id %>" data-id="<%= a.id %>">
-                <img src="<%= a.app_logo %>" class="w3-circle app-logo w3-border" alt="" />
-                <div class="w3-block">
-                    <div class="w3-text-theme">#<%= a.id %> <span class="app_name"><%= a.app_name %></span></div>
-                    <div class="redirect_uri w3-tiny"><%= a.redirect_uri %></div>
-                    <div class="w3-section"></div>
-                    <button class="w3-button w3-theme w3-tiny w3-round edit" data-id="<%= a.id %>">Edit</button>
-                    <form action="/app/delete" method="post" class="w3-right">
-                        <input type="hidden" name="id" value="<%= a.id %>">
-                        <button class="w3-button w3-round w3-tiny delete" data-id="<%= a.id %>">Delete</button>
-                    </form>
-                </div>
-            </li>
-        <% }) %>
-    </ul>
-    <hr>
-    <div class="w3-center w3-section">
-        <a href="/auth/v1/logout" class="w3-button w3-round w3-theme">Logout</a>
+    <div class="w3-col s12">
+        <div class="w3-center w3-section">
+            <a href="/auth/v1/logout" class="w3-button w3-round w3-theme">Logout</a>
+        </div>
     </div>
 </div>
 
@@ -58,37 +60,24 @@
                 id: id,
                 app_name: el.querySelector(".app_name").textContent,
                 app_logo: el.querySelector(".app-logo").getAttribute("src"),
-                redirect_uri: el.querySelector(".redirect_uri").textContent
+                redirect_uri: el.querySelector(".redirect_uri").textContent,
+                redirect_uri_test: el.querySelector(".redirect_uri_test").textContent
             }
             let formEl = document.querySelector("form");
             for( var i in obj ) {
                 formEl.querySelector(`[name=${i}]`).value = obj[i];
             }
             if ( formEl.querySelector(`[name=id]`).value.trim().length > 0 ) {
-                formEl.querySelector(`[name=id]`).removeAttribute("disabled");
                 document.querySelector(".submit").textContent = 'Update'
             } else {
-                formEl.querySelector(`[name=id]`).setAttribute("disabled", "");
                 document.querySelector(".submit").textContent = 'Create'
             }
         });
-    });
-    document.querySelector("[name=id]").addEventListener( "input", ev => {
-        if ( ev.currentTarget.value.trim().length == 0 ) {
-            ev.currentTarget.setAttribute("disabled", "");
-            document.querySelector(".submit").textContent = 'Create'
-        } else {
-            ev.currentTarget.removeAttribute("disabled");
-            document.querySelector(".submit").textContent = 'Update'
-        }
     });
 
     document.querySelector('.new-btn').addEventListener("click", () => {
         document.querySelectorAll("form input").forEach( input => {
             input.value = ""
-            if ( input.getAttribute( "name" ) == 'id' ) {
-                input.setAttribute( "disabled", "" );
-            }
         });
         document.querySelector(".submit").textContent = 'Create'
     });

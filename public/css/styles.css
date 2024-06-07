@@ -1,5 +1,5 @@
 .flex-center { display: flex; justify-content: center; align-items: center; }
-.max-width { max-width: 420px; margin: auto; }
+.max-width { max-width: 1024px; margin: auto; }
 .overflow-hidden { overflow: hidden; }
 .progress-bar { height:8px;width:0%; transition: all 0.5s;}
 .app-logo {width: 180px; height: 180px;}

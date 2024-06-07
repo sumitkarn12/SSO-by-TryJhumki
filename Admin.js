@@ -20,6 +20,7 @@ auth_app.get("/", function (req, res) {
 
 auth_app.post("/", function (req, res) {
     let app_details = req.body;
+    console.log( app_details );
     app_details.owner = req.logged_user.id;
     if (!app_details.id)
         db.createApp(app_details, response =>  res.redirect("/app") );

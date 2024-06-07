@@ -5,22 +5,6 @@ require('dotenv').config();
 const db = require("./db")
 const { Worker } = require('worker_threads');
 
-auth.use(["/:app_id", "/:app_id/*"], (req, res, next) => {
-    req.params.app_id = +req.params.app_id;
-    req.body.app_id = +req.body?.app_id;
-    db.getApp(req.params.app_id, response => {
-        req.err = [];
-        req.app_detail = null;
-        if (response.success) {
-            req.app_detail = response.app_detail;
-        } else {
-            req.err.push(response.message);
-        }
-        req.app_detail.test = req.query.test;
-        next();
-    });
-});
-
 function getViewObject(app_detail, message_array = []) {
     return Object.assign({
         id: null,
@@ -62,6 +46,23 @@ auth.get("/callback", (req, res) => {
         });
     }
     res.status(403).json({ success: false, message: req.err });
+});
+
+auth.use(["/:app_id", "/:app_id/*"], (req, res, next) => {
+    console.log( "Running Middleware" );
+    req.params.app_id = +req.params.app_id;
+    req.body.app_id = +req.body?.app_id;
+    db.getApp(req.params.app_id, response => {
+        req.err = [];
+        req.app_detail = null;
+        if (response.success) {
+            req.app_detail = response.app_detail;
+        } else {
+            req.err.push(response.message);
+        }
+        req.app_detail.test = req.query.test;
+        next();
+    });
 });
 
 // For 3rd party SSO page
